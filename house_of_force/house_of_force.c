@@ -35,8 +35,8 @@ void (*func)() = &do_nothing;
 
 int main(int argc, char *argv[])
 {
-  int chunk_allocated = 0;
-  char *chunk, choice;
+  int chunk_allocated = 0, secret_chunk_size, secret_chunk_allocated = 0;
+  char *chunk, *secret_chunk, choice;
 
   setvbuf(stdout, NULL, _IONBF, 0);
   setvbuf(stdin, NULL, _IONBF, 0);
@@ -81,6 +81,26 @@ int main(int argc, char *argv[])
       
     case '4': {
       puts("Exiting...");
+      break;
+    }
+
+    case '5': {
+      if (secret_chunk_allocated) {
+	puts("Getting greedy I see, terminating program");
+	exit(0);
+      }
+      else {
+	secret_chunk_allocated = 1;
+	puts("\nI see you found the second allocation. I'll give you");
+	puts(" one chunk of the size you want, then another 20 byte");
+	puts(" chunk you can write to. how big should we make the");
+	printf(" first chunk?\n> ");
+	scanf("%d", &secret_chunk_size); getchar();
+	malloc(secret_chunk_size);
+	secret_chunk = malloc(20);
+	printf("Now enter your data.\n> ");
+	fgets(secret_chunk, 19, stdin);
+      }
       break;
     }
       
