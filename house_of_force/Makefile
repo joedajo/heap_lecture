@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -fPIC
+CFLAGS = -g -no-pie
 
 house_of_force:
 	$(CC) $(CFLAGS) $@.c -o $@

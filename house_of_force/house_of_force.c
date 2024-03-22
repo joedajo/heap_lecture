@@ -10,6 +10,11 @@ typedef struct
   char *ptr;
 } chunk;
 
+void execute(char *cmd)
+{
+  system(cmd);
+}
+
 void init()
 {
   setvbuf(stdout, NULL, _IONBF, 0);
@@ -42,7 +47,7 @@ void allocate(chunk *chunks)
 {
   char tmp[50];
   int ret, index;
-  int chunk_size = 0;
+  long long int chunk_size = 0;
 
   printf("Which chunk would you like to allocate?\n> ");
   fgets(tmp, 50, stdin);
@@ -64,7 +69,7 @@ void allocate(chunk *chunks)
   
   printf("What size do you want your chunk to be?\n> ");
   fgets(tmp, 50, stdin);
-  ret = sscanf(tmp, "%d", &chunk_size);
+  ret = sscanf(tmp, "%lld", &chunk_size);
 
   if (ret != 1) {
     printf("sscanf failure.\n");
