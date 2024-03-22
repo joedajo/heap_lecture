@@ -1,5 +1,21 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
+#define CHUNK_SIZE 20
+
+typedef struct
+{
+  int allocated;
+  char *ptr;
+} chunk;
+
+void init()
+{
+  setvbuf(stdout, NULL, _IONBF, 0);
+  setvbuf(stdin, NULL, _IONBF, 0);
+  setvbuf(stderr, NULL, _IONBF, 0);
+}
 
 void do_nothing()
 {
@@ -14,33 +30,93 @@ void do_something()
 
 void print_menu()
 {
-  puts("1. malloc");
-  puts("2. write to chunk");
-  puts("3. do nothing");
-  puts("4. quit");
+  printf("1. malloc\n");
+  printf("2. write to chunk\n");
+  printf("3. do nothing\n");
+  printf("4. quit\n");
   printf("> ");
 }
 
-int allocate(char **ptr)
+void allocate(chunk *chunks)
 /* allocate a 256 byte chunk */
 {
-  puts("Allocating 256 byte chunk...");
-  *ptr = malloc(256);
-  return 1;
+  char tmp[50];
+  int ret, index;
+  int chunk_size = 0;
+
+  printf("Which chunk would you like to allocate?\n> ");
+  fgets(tmp, 50, stdin);
+  ret = sscanf(tmp, "%d", &index);  
+  if (ret != 1) {
+    printf("sscanf failure.\n");
+    return;
+  }
+
+  if (index < 0 || index > 2) {
+    printf("You can't write there.\n");
+    return;
+  }
+  
+  if (chunks[index].allocated) {
+    printf("Chunks[%d] already allocated.\n", index);
+    return;
+  }
+  
+  printf("What size do you want your chunk to be?\n> ");
+  fgets(tmp, 50, stdin);
+  ret = sscanf(tmp, "%d", &chunk_size);
+
+  if (ret != 1) {
+    printf("sscanf failure.\n");
+    return;
+  }
+
+  chunks[index].allocated = 1;
+  chunks[index].ptr = malloc(chunk_size);
+
+  printf("Chunk allocated with address: %p\n", chunks[index].ptr);
+  return;
+}
+
+void write_chunk(chunk *chunks)
+{
+  char tmp[50];
+  int ret, index;
+  
+  printf("Which chunk would you like to write to?\n> ");
+  fgets(tmp, 50, stdin);
+  ret = sscanf(tmp, "%d", &index);  
+  if (ret != 1) {
+    printf("sscanf failure.\n");
+    return;
+  }
+
+  if (index < 0 || index > 2) {
+    printf("You can't write there.\n");
+    return;
+  }
+
+  if (!chunks[index].allocated) {
+    printf("Chunk not allocated yet.\n");
+    return;
+  }
+  
+  printf("Now enter the data you want in your chunk.\n> ");
+  fgets(chunks[index].ptr, 100, stdin);
 }
 
 /* Useful function pointer! (if I want to change it later) */
 void (*func)() = &do_nothing;
 
-
 int main(int argc, char *argv[])
 {
-  int chunk_allocated = 0, secret_chunk_size, secret_chunk_allocated = 0;
-  char *chunk, *secret_chunk, choice;
-
-  setvbuf(stdout, NULL, _IONBF, 0);
-  setvbuf(stdin, NULL, _IONBF, 0);
-  setvbuf(stderr, NULL, _IONBF, 0);
+  chunk chunks[3];
+  char choice;
+  int i;
+  
+  init();
+  for (i=0; i<3; i++)
+    memset(&chunks[i], 0, sizeof chunks[i]);
   
   puts("Hello, welcome to the malloc simulation.\n");
   puts("Please choose an option below.\n");
@@ -58,19 +134,12 @@ int main(int argc, char *argv[])
     }
 
     case '1': {
-      if (chunk_allocated) 
-	puts("Chunk already allocated.");
-      else
-	chunk_allocated = allocate(&chunk);
-      printf("Chunk address: %p\n", chunk);
+      allocate(chunks);
       break;
     }
       
     case '2': {
-      if (chunk_allocated) 
-	gets(chunk);
-      else
-	puts("You haven't allocated anything yet!");
+      write_chunk(chunks);
       break;
     }
 
@@ -84,26 +153,6 @@ int main(int argc, char *argv[])
       break;
     }
 
-    case '5': {
-      if (secret_chunk_allocated) {
-	puts("Getting greedy I see, terminating program");
-	exit(0);
-      }
-      else {
-	secret_chunk_allocated = 1;
-	puts("\nI see you found the second allocation. I'll give you");
-	puts(" one chunk of the size you want, then another 20 byte");
-	puts(" chunk you can write to. how big should we make the");
-	printf(" first chunk?\n> ");
-	scanf("%d", &secret_chunk_size); getchar();
-	malloc(secret_chunk_size);
-	secret_chunk = malloc(20);
-	printf("Now enter your data.\n> ");
-	fgets(secret_chunk, 19, stdin);
-      }
-      break;
-    }
-      
     default: {
       puts("Invalid choice. Try again.");
     }
@@ -111,8 +160,9 @@ int main(int argc, char *argv[])
     } // end switch
   } while (choice != '4');
 
-  if (chunk_allocated)
-    free(chunk);
-  
+  for (i=0; i<3; i++)
+    if (chunks[i].allocated)
+      free(chunks[i].ptr);
+
   return 0;
 }
